@@ -28,9 +28,15 @@ public class BlockChain {
         this.difficulty = difficulty;
     }
 
+    public boolean AddBlock(){
+        Block block = new Block(this.GetLast().getHash());
+        return this.AddBlock(block);
+    }
+    public Block GetNewBlock(){
+        return new Block(this.GetLast().getHash());
+    }
     public boolean AddBlock(Block block){
         if (VerifyNewBlock(block)){
-            block.Mine(this.difficulty);
             this.blockChain.add(block);
             support.firePropertyChange("blockChain", new LinkedList<Block>(), this.blockChain); // WARNING: old value is useless
             return true;
@@ -51,9 +57,12 @@ public class BlockChain {
             return false;
         if (this.blockChain.size()<1)
             return true;
-        if (Objects.equals(this.GetLast().getHash(), block.getPrevHash()))
-            return true;
-        return false;
+        if (!Objects.equals(this.GetLast().getHash(), block.getPrevHash()))
+            return false;
+        if (!(block.getHash().substring(0, difficulty).
+                equals("0".repeat(difficulty))))
+            return false;
+        return true;
     }
 
     public boolean VerifyBlockChain(){
@@ -91,7 +100,7 @@ public class BlockChain {
         }
     }
 
-    public static BlockChain FromFile(String filepath){
+    public static BlockChain FromFile(String filepath) throws RuntimeException{
         try {
             BufferedReader reader =  new BufferedReader(new FileReader(filepath));
             BlockChain result = new Gson().fromJson(reader,BlockChain.class);
@@ -119,5 +128,9 @@ public class BlockChain {
     }
     public void removePropertyChangeListener(PropertyChangeListener listener) {
         support.removePropertyChangeListener(listener);
+    }
+
+    public static boolean IsDifficultyValid(int difficulty){
+        return difficulty > 0;
     }
 }

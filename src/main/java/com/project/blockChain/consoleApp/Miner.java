@@ -1,4 +1,4 @@
-package com.project.blockChain.server;
+package com.project.blockChain.consoleApp;
 
 import com.project.blockChain.blockChainClasses.Block;
 import com.project.blockChain.blockChainClasses.BlockChain;
@@ -15,8 +15,6 @@ public class Miner{
             Block block = blockChain.GetNewBlock();
             block.Mine(blockChain.difficulty);
             blockChain.AddBlock(block);
-            blockChain.ToFile("blockchain.json");
-            System.out.println("mined");
         }
     }
 
@@ -24,4 +22,7 @@ public class Miner{
         this.run = false;
     }
 
+    public boolean isRun() {
+        return run;
+    }
 }
