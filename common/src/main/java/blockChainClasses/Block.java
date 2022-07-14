@@ -10,6 +10,19 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class Block {
+    public Long getTimestamp() {
+        return timestamp;
+    }
+    private int depth;
+
+    public int getDepth() {
+        return depth;
+    }
+
+    public void setDepth(int depth) {
+        this.depth = depth;
+    }
+
     private String hash;
     private String prevHash;
     public ArrayList<Transaction> transactions;

@@ -6,10 +6,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.scheduling.annotation.EnableAsync;
 
 import java.io.IOException;
 @SpringBootApplication
-
 public class ConsoleApplication implements CommandLineRunner {
     @Autowired
     private Miner miner;
@@ -110,7 +110,7 @@ public class ConsoleApplication implements CommandLineRunner {
         }
     }
     private void ShowBlockChain(){
-        System.out.println(this.blockChain.ToJson());
+        ConsoleHelper.PrintBlockchain(blockChain);
     }
     //endregion
     //endregion

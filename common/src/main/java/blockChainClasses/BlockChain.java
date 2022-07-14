@@ -17,6 +17,11 @@ public class BlockChain {
     private transient final PropertyChangeSupport support = new PropertyChangeSupport(this);
     private LinkedList<Block> blockChain;
     public int difficulty;
+
+    public LinkedList<Block> getBlockChain() {
+        return blockChain;
+    }
+
     public BlockChain(){
         this.blockChain = new LinkedList<>();
         this.blockChain.add(new Block("0", new ArrayList<>()));
@@ -36,19 +41,20 @@ public class BlockChain {
         Block block = new Block(this.GetLast().getHash());
         return this.AddBlock(block);
     }
-    public Block GetNewBlock(){
-        return new Block(this.GetLast().getHash());
+    public boolean AddBlock(Block block){
+        return this.AddBlock(block, false);
     }
     public boolean AddBlock(Block block, boolean mined){
         if (VerifyNewBlock(block, mined)){
+            block.setDepth(this.blockChain.size());
             this.blockChain.add(block);
             support.firePropertyChange("blockChain", new LinkedList<Block>(), this.blockChain); // WARNING: old value is useless
             return true;
         }
         return false;
     }
-    public boolean AddBlock(Block block){
-        return this.AddBlock(block, false);
+    public Block GetNewBlock(){
+        return new Block(this.GetLast().getHash());
     }
     public Block GetLast(){
         if (this.blockChain.size() == 0)
