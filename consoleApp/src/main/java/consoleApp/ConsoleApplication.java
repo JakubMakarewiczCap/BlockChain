@@ -2,11 +2,11 @@ package consoleApp;
 
 import blockChainClasses.Block;
 import blockChainClasses.BlockChain;
+import blockChainClasses.Transaction;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.scheduling.annotation.EnableAsync;
 
 import java.io.IOException;
 @SpringBootApplication
@@ -33,6 +33,9 @@ public class ConsoleApplication implements CommandLineRunner {
                     break;
                 case 1:
                     this.Mine();
+                    break;
+                case 3:
+                    this.WalletScreen();
                     break;
                 case 4:
                     this.ShowBlockChain();
@@ -69,7 +72,7 @@ public class ConsoleApplication implements CommandLineRunner {
     }
     //region Windows
     private int CreateGetActionWindow() throws IOException {
-        System.out.println("------------------------------------------------------");
+        System.out.println("=".repeat(148));
         Integer action = null;
         while (action ==null) {
             action = ConsoleHelper.ReadInt("Choose action: " +
@@ -98,7 +101,32 @@ public class ConsoleApplication implements CommandLineRunner {
         }
     }
     private void BlockInfoScreen(){}
-    private void UserInfoScreen(){}
+    private void WalletScreen() throws IOException {
+        System.out.println("-".repeat(70)+" Wallet "+"-".repeat(69));
+        var userId = ConsoleHelper.ReadString("Provide UserID: ");
+        Integer action = null;
+        while (action ==null) {
+            action = ConsoleHelper.ReadInt("Choose action: " +
+                    "\n1. get balance" +
+                    "\n2. get history" +
+                    "\n0. return");
+            if (action != null && (action < 0 || action > 2)){
+                System.out.println("invalid action: " + action);
+                action = null;
+            }
+        }
+        switch (action){
+            case 0:
+                return;
+            case 1:
+                System.out.println(String.format("User: %s balance: %f", userId, blockChain.GetUserBalance(userId)));
+                break;
+            case 2:
+                System.out.println(String.format("User: %s transaction history:\n", userId));
+                ConsoleHelper.PrintTransactionHistory(blockChain.GetUserTransactionHistory(userId));
+                break;
+        }
+    }
     private void ToggleMiner(){
         if (this.miner.isRun()) {
             System.out.println("Stopping Miner..");

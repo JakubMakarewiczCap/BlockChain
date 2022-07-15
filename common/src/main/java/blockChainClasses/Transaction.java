@@ -5,7 +5,7 @@ import java.util.Objects;
 public class Transaction {
     private String fromId;
     private String toId;
-    private int amount;
+    private double amount;
     public String getFromId() {
         return fromId;
     }
@@ -14,11 +14,11 @@ public class Transaction {
         return toId;
     }
 
-    public int getAmount(){
+    public double getAmount(){
         return amount;
     }
 
-    public Transaction(String fromId, String toId, int amount) {
+    public Transaction(String fromId, String toId, double amount) {
         this.fromId = fromId;
         this.toId = toId;
         this.amount = amount;
@@ -44,5 +44,9 @@ public class Transaction {
                 !Objects.equals(this.amount, rhs.amount))
             return false;
         return true;
+    }
+
+    public boolean InvolvesUser(String user){
+        return Objects.equals(this.fromId, user) || Objects.equals(this.toId, user);
     }
 }

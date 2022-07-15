@@ -2,14 +2,12 @@ package consoleApp;
 
 import blockChainClasses.Block;
 import blockChainClasses.BlockChain;
+import blockChainClasses.Transaction;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.Objects;
+import java.util.*;
 
 public class ConsoleHelper {
     public static String ReadString(String message) throws IOException {
@@ -54,5 +52,14 @@ public class ConsoleHelper {
 
         }
         System.out.println(stringBuilder.substring(0,stringBuilder.length()-2));
+    }
+    public static void PrintTransactionHistory(ArrayList<Transaction> transactions){
+        StringBuilder stringBuilder = new StringBuilder();
+        for(Iterator<Transaction> itr = ((ArrayList<Transaction>)transactions.clone()).iterator();
+            itr.hasNext();){
+            Transaction t = itr.next();
+            stringBuilder.append(String.format("\nfrom: %-25s to: %-25s amount: %-25f", t.getFromId(), t.getToId(), t.getAmount()));
+        }
+        System.out.println(stringBuilder);
     }
 }

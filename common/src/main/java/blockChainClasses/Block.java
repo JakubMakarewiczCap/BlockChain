@@ -56,7 +56,7 @@ public class Block {
         return prevHash;
     }
 
-    public Collection<Transaction> getTransactions() {
+    public ArrayList<Transaction> getTransactions() {
         return transactions;
     }
 
