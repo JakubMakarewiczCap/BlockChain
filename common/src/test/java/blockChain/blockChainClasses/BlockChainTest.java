@@ -3,7 +3,6 @@ package blockChain.blockChainClasses;
 import blockChainClasses.Block;
 import blockChainClasses.BlockChain;
 import blockChainClasses.Transaction;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -54,7 +53,7 @@ class BlockChainTest {
         blockChain.ToFile("test.json");
         BlockChain blockChain2 = BlockChain.FromFile("test.json");
         assertEquals(blockChain, blockChain2);
-        blockChain2.GetLast().transactions.add(new Transaction("","",1));
+        blockChain2.GetLast().transactions.add(new Transaction("","",1, System.currentTimeMillis()));
         assertNotEquals(blockChain, blockChain2);
     }
 
@@ -62,17 +61,17 @@ class BlockChainTest {
     class TransactionTestsNested{
         @BeforeEach
         void setup(){
-            blockChain.addPendingTransaction(new Transaction(null, "1", 2));
-            blockChain.addPendingTransaction(new Transaction(null, "2", 10));
-            blockChain.addPendingTransaction(new Transaction(null, "3", 10));
-            blockChain.addPendingTransaction(new Transaction("1", "2", 2));
-            blockChain.addPendingTransaction(new Transaction("3", "2", 5));
+            blockChain.addPendingTransaction(new Transaction(null, "1", 2, System.currentTimeMillis()));
+            blockChain.addPendingTransaction(new Transaction(null, "2", 10,System.currentTimeMillis()));
+            blockChain.addPendingTransaction(new Transaction(null, "3", 10,System.currentTimeMillis()));
+            blockChain.addPendingTransaction(new Transaction("1", "2", 2,System.currentTimeMillis()));
+            blockChain.addPendingTransaction(new Transaction("3", "2", 5,System.currentTimeMillis()));
             Block b1 = blockChain.GetNewBlockForMining("1");
             b1.Mine(blockChain.difficulty);
             blockChain.AddBlock(b1, true);
 
-            blockChain.addPendingTransaction(new Transaction("2", "1", 6));
-            blockChain.addPendingTransaction(new Transaction("3", "4", 3));
+            blockChain.addPendingTransaction(new Transaction("2", "1", 6,System.currentTimeMillis()));
+            blockChain.addPendingTransaction(new Transaction("3", "4", 3,System.currentTimeMillis()));
             Block b2 = blockChain.GetNewBlockForMining("1");
             b2.Mine(blockChain.difficulty);
             blockChain.AddBlock(b2, true);
@@ -87,11 +86,11 @@ class BlockChainTest {
         }
         @Test
         void verifyTransactionTest(){
-            assertTrue(blockChain.VerifyTransaction(new Transaction(null, "2", 0)));
-            assertTrue(blockChain.VerifyTransaction(new Transaction("1", "2", 3)));
-            assertFalse(blockChain.VerifyTransaction(new Transaction("2", "2", 3)));
-            assertFalse(blockChain.VerifyTransaction(new Transaction("3", "2", 23)));
-            assertFalse(blockChain.VerifyTransaction(new Transaction("3", "2", -1000)));
+            assertTrue(blockChain.VerifyTransaction(new Transaction(null, "2", 0,System.currentTimeMillis())));
+            assertTrue(blockChain.VerifyTransaction(new Transaction("1", "2", 3,System.currentTimeMillis())));
+            assertFalse(blockChain.VerifyTransaction(new Transaction("2", "2", 3,System.currentTimeMillis())));
+            assertFalse(blockChain.VerifyTransaction(new Transaction("3", "2", 23,System.currentTimeMillis())));
+            assertFalse(blockChain.VerifyTransaction(new Transaction("3", "2", -1000,System.currentTimeMillis())));
         }
 
         @Test

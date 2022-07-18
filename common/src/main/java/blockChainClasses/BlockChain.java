@@ -76,7 +76,7 @@ public class BlockChain {
     }
     public Block GetNewBlockForMining(String minerId){
         var block = new Block(this.GetLast().getHash());
-        block.transactions.add(new Transaction(null, minerId, this.miningReward));
+        block.transactions.add(new Transaction(null, minerId, this.miningReward,System.currentTimeMillis()));
         block.transactions.addAll(this.pendingTransactions);
         return block;
     }
@@ -107,6 +107,8 @@ public class BlockChain {
         for (int i = (mined?1:0); i<block.getTransactions().size();i++)
             if (!Objects.equals(block.getTransactions().get(i), this.pendingTransactions.get(i -(mined?1:0))))
                 return false;
+        if (mined && (block.getTransactions().get(0).getFromId()!=null || block.getTransactions().get(0).getAmount() != this.miningReward))
+            return false;
         return true;
     }
 

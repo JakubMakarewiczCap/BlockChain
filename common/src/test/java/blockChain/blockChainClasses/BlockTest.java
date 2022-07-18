@@ -14,7 +14,7 @@ class BlockTest {
     @org.junit.jupiter.api.Test
     void toJson() {
         Block block = new Block();
-        Transaction t1 = new Transaction("user1","user2", 100);
+        Transaction t1 = new Transaction("user1","user2", 100,System.currentTimeMillis());
         block.addTransaction(t1);
         String res = block.ToJson();
         System.out.println();

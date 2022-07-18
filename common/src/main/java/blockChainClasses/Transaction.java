@@ -6,6 +6,7 @@ public class Transaction {
     private String fromId;
     private String toId;
     private double amount;
+    private long timestamp;
     public String getFromId() {
         return fromId;
     }
@@ -18,19 +19,11 @@ public class Transaction {
         return amount;
     }
 
-    public Transaction(String fromId, String toId, double amount) {
+    public Transaction(String fromId, String toId, double amount, long timestamp) {
         this.fromId = fromId;
         this.toId = toId;
         this.amount = amount;
-    }
-
-    @Override
-    public String toString() {
-        return "Transaction{" +
-                "fromId='" + fromId + '\'' +
-                ", toId='" + toId + '\'' +
-                ", amount=" + amount +
-                '}';
+        this.timestamp = timestamp;
     }
 
     @Override
@@ -41,12 +34,27 @@ public class Transaction {
         Transaction rhs = (Transaction) other;
         if (!Objects.equals(this.fromId, rhs.fromId) ||
                 !Objects.equals(this.toId, rhs.toId) ||
-                !Objects.equals(this.amount, rhs.amount))
+                !Objects.equals(this.amount, rhs.amount) ||
+                !Objects.equals(this.timestamp, rhs.timestamp))
             return false;
         return true;
     }
 
+    @Override
+    public String toString() {
+        return "Transaction{" +
+                "fromId='" + fromId + '\'' +
+                ", toId='" + toId + '\'' +
+                ", amount=" + amount +
+                ", timestamp=" + timestamp +
+                '}';
+    }
+
     public boolean InvolvesUser(String user){
         return Objects.equals(this.fromId, user) || Objects.equals(this.toId, user);
+    }
+
+    public long getTimestamp() {
+        return timestamp;
     }
 }

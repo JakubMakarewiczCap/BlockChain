@@ -5,16 +5,16 @@ import blockChainClasses.BlockChain;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
-@Component("miner")
+@Component("Miner")
 public class Miner{
     private boolean run = false;
     @Async
-    public void runMiner(BlockChain blockChain){
+    public void runMiner(BlockChain blockChain, String userId){
         this.run = true;
         while (this.run){
-            Block block = blockChain.GetNewBlock();
+            Block block = blockChain.GetNewBlockForMining(userId);
             block.Mine(blockChain.difficulty);
-            blockChain.AddBlock(block);
+            blockChain.AddBlock(block,true);
         }
     }
 

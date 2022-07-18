@@ -7,9 +7,13 @@ import blockChainClasses.Transaction;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class ConsoleHelper {
+    private static SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy hh:mm:ss");
+
     public static String ReadString(String message) throws IOException {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         System.out.print(message);
@@ -28,38 +32,78 @@ public class ConsoleHelper {
     }
 
     public static void PrintBlockchain(BlockChain blockChain){
+        System.out.println(ConsoleHelper.BuildBlockChainString(blockChain.getBlockChain())
+                + "\nBlockchain length: "+blockChain.getBlockChain().size());
+    }
+    public static void PrintBlockchain(BlockChain blockChain, int skip, int take){
+        if (skip<0||take<=0) System.out.println("Skip and take cannot be <0");
+        if (skip>=blockChain.getBlockChain().size())
+            System.out.println("Skip: " + skip
+                    + "is bigger or equal to the blockchain length: " + blockChain.getBlockChain().size());
         StringBuilder stringBuilder = new StringBuilder();
-        for(Iterator<Block> itr = ((LinkedList<Block>)blockChain.getBlockChain().clone()).iterator();
+        if (skip>0)
+            stringBuilder.append(String.format("%50s\n", ".").repeat(2))
+                    .append(String.format("%50s", "V"));
+        stringBuilder.append(ConsoleHelper.BuildBlockChainString(
+                blockChain.getBlockChain()
+                        .stream()
+                        .skip(skip)
+                        .limit(take)
+                        .collect(Collectors.toCollection(LinkedList::new))));
+        if (skip+take-1 < blockChain.getBlockChain().size()-1)
+            stringBuilder.append(String.format("\n%50s\n", "V"))
+                    .append(String.format("%50s\n", ".").repeat(2));
+        System.out.println(stringBuilder);
+    }
+
+    public static void PrintTransactionHistory(ArrayList<Transaction> transactions){
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append("-".repeat(100)).append("\n");
+        for (Transaction transaction : (ArrayList<Transaction>) transactions.clone()) {
+            stringBuilder.append(String.format("| %-96s |\n",
+                    String.format("from: %-15s to: %-15s amount: %-20f date: %s",
+                            transaction.getFromId(), transaction.getToId(),
+                            transaction.getAmount(), ConsoleHelper.dateFormat.format(new Date(transaction.getTimestamp())))));
+        }
+        stringBuilder.append("-".repeat(100));
+        System.out.println(stringBuilder);
+    }
+    private static String BuildBlockChainString(LinkedList<Block> blockChain){
+        StringBuilder stringBuilder = new StringBuilder();
+        for(Iterator<Block> itr = ((LinkedList<Block>)blockChain.clone()).iterator();
             itr.hasNext();){
             Block block = itr.next();
             stringBuilder.append("\n");
-            stringBuilder.append("-".repeat(74));
-            stringBuilder.append(String.format("\n| depth: %-63s |", block.getDepth()));
-            if (Objects.equals(block.getPrevHash(), "0"))
-                stringBuilder.append(String.format("\n| prevHash: %-60s |\n", "0"));
-            else
-                stringBuilder.append(String.format(
-                        "\n| %-70s |\n",
-                        String.format("prevHash: %4s...%4s",
+            stringBuilder.append(ConsoleHelper.BuildBlockString(block));
+        }
+        return stringBuilder.substring(0,stringBuilder.length()-2);
+    }
+    private static String BuildBlockString(Block block){
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append("-".repeat(100));
+        stringBuilder.append(String.format("\n| depth: %-89s |", block.getDepth()));
+        if (Objects.equals(block.getPrevHash(), "0"))
+            stringBuilder.append(String.format("\n| prevHash: %-86s |\n", "0"));
+        else
+            stringBuilder.append(String.format(
+                    "\n| %-96s |\n",
+                    String.format("prevHash: %4s...%4s",
                             block.getPrevHash().substring(0,4),
                             block.getPrevHash().substring(block.getPrevHash().length()-4)
-                        ))
-                );
-            stringBuilder.append(String.format("| hash: %-64s |\n", block.getHash()));
-            stringBuilder.append(String.format("| date: %-64s |\n", new Date(block.getTimestamp())));
-            stringBuilder.append("-".repeat(74));
-            stringBuilder.append(String.format("\n %36s", "V"));
-
+                    ))
+            );
+        stringBuilder.append(String.format("| hash: %-90s |\n", block.getHash()));
+        stringBuilder.append(String.format("| date: %-90s |\n",ConsoleHelper.dateFormat.format(new Date(block.getTimestamp()))));
+        stringBuilder.append(String.format("| transactions: %-82s |\n", ""));
+        for (Transaction transaction :
+                block.getTransactions()) {
+            stringBuilder.append(String.format("| %-96s |\n",
+                    String.format(">from: %-15s to: %-15s amount: %-19f date: %s",
+                            transaction.getFromId(), transaction.getToId(),
+                            transaction.getAmount(),ConsoleHelper.dateFormat.format(new Date(transaction.getTimestamp())))));
         }
-        System.out.println(stringBuilder.substring(0,stringBuilder.length()-2));
-    }
-    public static void PrintTransactionHistory(ArrayList<Transaction> transactions){
-        StringBuilder stringBuilder = new StringBuilder();
-        for(Iterator<Transaction> itr = ((ArrayList<Transaction>)transactions.clone()).iterator();
-            itr.hasNext();){
-            Transaction t = itr.next();
-            stringBuilder.append(String.format("\nfrom: %-25s to: %-25s amount: %-25f", t.getFromId(), t.getToId(), t.getAmount()));
-        }
-        System.out.println(stringBuilder);
+        stringBuilder.append("-".repeat(100));
+        stringBuilder.append(String.format("\n %50s", "V"));
+        return stringBuilder.toString();
     }
 }
