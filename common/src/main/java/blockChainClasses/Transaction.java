@@ -3,10 +3,10 @@ package blockChainClasses;
 import java.util.Objects;
 
 public class Transaction {
-    private String fromId;
-    private String toId;
-    private double amount;
-    private long timestamp;
+    private final String fromId;
+    private final String toId;
+    private final double amount;
+    private final long timestamp;
     public String getFromId() {
         return fromId;
     }
@@ -50,7 +50,7 @@ public class Transaction {
                 '}';
     }
 
-    public boolean InvolvesUser(String user){
+    public boolean involvesUser(String user){
         return Objects.equals(this.fromId, user) || Objects.equals(this.toId, user);
     }
 

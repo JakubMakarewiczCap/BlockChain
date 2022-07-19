@@ -16,11 +16,11 @@ import java.util.stream.Collectors;
 
 public class BlockChain {
     private transient final PropertyChangeSupport support = new PropertyChangeSupport(this);
-    private LinkedList<Block> blockChain;
-    private ArrayList<Transaction> pendingTransactions;
+    private final LinkedList<Block> blockChain;
+    private final ArrayList<Transaction> pendingTransactions;
 
     public boolean addPendingTransaction(Transaction pendingTransaction) {
-        if (!this.VerifyTransaction(pendingTransaction, true))
+        if (!this.verifyTransaction(pendingTransaction, true))
             return false;
         this.pendingTransactions.add(pendingTransaction);
         support.firePropertyChange("pendingTransactions", new ArrayList<Transaction>(), this.pendingTransactions); // WARNING: old value is useless
@@ -49,20 +49,8 @@ public class BlockChain {
         this(difficulty);
         this.miningReward = miningReward;
     }
-    public BlockChain(LinkedList<Block> blockChain, int difficulty, double miningReward) {
-        this(difficulty, miningReward);
-        this.blockChain = blockChain;
-    }
-
-    public boolean AddBlock(){
-        Block block = new Block(this.GetLast().getHash());
-        return this.AddBlock(block);
-    }
-    public boolean AddBlock(Block block){
-        return this.AddBlock(block, false);
-    }
-    public boolean AddBlock(Block block, boolean mined){
-        if (VerifyNewBlock(block, mined)){
+    public boolean addBlock(Block block){
+        if (verifyNewBlock(block)){
             block.setDepth(this.blockChain.size());
             this.blockChain.add(block);
             support.firePropertyChange("blockChain", new LinkedList<Block>(), this.blockChain); // WARNING: old value is useless
@@ -71,73 +59,65 @@ public class BlockChain {
         }
         return false;
     }
-    public Block GetNewBlock(){
-        return new Block(this.GetLast().getHash(), this.pendingTransactions);
-    }
-    public Block GetNewBlockForMining(String minerId){
-        var block = new Block(this.GetLast().getHash());
+    public Block getNewBlock(String minerId){
+        var block = new Block(this.getLastBlock().getHash());
         block.transactions.add(new Transaction(null, minerId, this.miningReward,System.currentTimeMillis()));
         block.transactions.addAll(this.pendingTransactions);
+        block.setHash(block.generateHash());
         return block;
     }
-    public Block GetLast(){
+    public Block getLastBlock(){
         if (this.blockChain.size() == 0)
             return null;
         return this.blockChain.getLast();
     }
-    public void Clear(){
-        this.blockChain.clear();
-    }
-    public boolean VerifyNewBlock(Block block){
-        return this.VerifyNewBlock(block, false);
-    }
-    public boolean VerifyNewBlock(Block block, boolean mined){
-        if (!Objects.equals(block.GenerateHash(), block.getHash()))
+    public boolean verifyNewBlock(Block block){
+        if (!Objects.equals(block.generateHash(), block.getHash()))
             return false;
         if (this.blockChain.size()<1)
             return true;
-        if (!Objects.equals(this.GetLast().getHash(), block.getPrevHash()))
+        if (!Objects.equals(this.getLastBlock().getHash(), block.getPrevHash()))
             return false;
-        if (mined &&
-                (!(block.getHash().substring(0, difficulty).equals("0".repeat(difficulty)))
-                || !(block.transactions.get(0).getAmount() == this.miningReward)))
+        if (!(block.getHash().substring(0, difficulty).equals("0".repeat(difficulty)))
+                || !(block.transactions.get(0).getAmount() == this.miningReward))
             return false;
-        if (block.getTransactions().size()- (mined? 1: 0) != this.pendingTransactions.size())
+        if (block.getTransactions().size()- 1 != this.pendingTransactions.size())
             return false;
-        for (int i = (mined?1:0); i<block.getTransactions().size();i++)
-            if (!Objects.equals(block.getTransactions().get(i), this.pendingTransactions.get(i -(mined?1:0))))
+        for (int i = 1; i<block.getTransactions().size();i++)
+            if (!Objects.equals(block.getTransactions().get(i), this.pendingTransactions.get(i -1)))
                 return false;
-        if (mined && (block.getTransactions().get(0).getFromId()!=null || block.getTransactions().get(0).getAmount() != this.miningReward))
+        if (block.getTransactions().get(0).getFromId()!=null
+                || block.getTransactions().get(0).getAmount() != this.miningReward)
             return false;
         return true;
     }
 
-    public boolean VerifyBlockChain(){
+    public boolean verifyBlockChain(){
         if (this.blockChain.size() == 0)
             return true;
         if (this.blockChain.size() == 1)
-            return Objects.equals(this.blockChain.getFirst().GenerateHash(),
+            return Objects.equals(this.blockChain.getFirst().generateHash(),
                     this.blockChain.getFirst().getHash());
         Iterator<Block> i = this.blockChain.iterator();
         Block prev = i.next();
         Block current;
         while (i.hasNext()) {
             current = i.next();
-            if (!Objects.equals(prev.getHash(), prev.GenerateHash()))
+            if (!Objects.equals(prev.getHash(), prev.generateHash()))
                 return false;
             if (!Objects.equals(prev.getHash(), current.getPrevHash()))
                 return false;
             if (!(current.getHash().substring(0, difficulty).
                     equals("0".repeat(difficulty))))
                 return false;
-            if (current.getTransactions().stream().anyMatch(t -> !this.VerifyTransaction(t)))
+            if (current.getTransactions().stream().anyMatch(t -> !this.verifyTransaction(t)))
                 return false;
             prev = current;
         }
         return true;
     }
 
-    public String ToJson(){
+    public String toJson(){
         return new Gson().toJson(this);
     }
 
@@ -149,7 +129,7 @@ public class BlockChain {
         this.miningReward = miningReward;
     }
 
-    public void ToFile(String filepath){
+    public void serializeToFile(String filepath){
         String json = new Gson().toJson(this);
         try {
             FileWriter writer = new FileWriter(filepath);
@@ -160,7 +140,7 @@ public class BlockChain {
         }
     }
 
-    public static BlockChain FromFile(String filepath) throws RuntimeException{
+    public static BlockChain deserializeFromFile(String filepath) throws RuntimeException{
         try {
             BufferedReader reader =  new BufferedReader(new FileReader(filepath));
             BlockChain result = new Gson().fromJson(reader,BlockChain.class);
@@ -186,18 +166,14 @@ public class BlockChain {
     public void addPropertyChangeListener(PropertyChangeListener listener) {
         support.addPropertyChangeListener(listener);
     }
-    public void removePropertyChangeListener(PropertyChangeListener listener) {
-        support.removePropertyChangeListener(listener);
-    }
-
-    public static boolean IsDifficultyValid(int difficulty){
+    public static boolean isDifficultyValid(int difficulty){
         return difficulty > 0;
     }
 
-    public double GetUserBalance(String userId){
-        return this.GetUserBalance(userId, true);
+    public double getUserBalance(String userId){
+        return this.getUserBalance(userId, true);
     }
-    public double GetUserBalance(String userId, boolean includePending){
+    public double getUserBalance(String userId, boolean includePending){
         double balance=0;
         for (Block block :
                 this.blockChain) {
@@ -221,25 +197,25 @@ public class BlockChain {
         return balance;
     }
 
-    public boolean VerifyTransaction(Transaction t){
-        return this.VerifyTransaction(t, false);
+    public boolean verifyTransaction(Transaction t){
+        return this.verifyTransaction(t, false);
     }
-    public boolean VerifyTransaction(Transaction t, boolean isNewTransaction){
+    public boolean verifyTransaction(Transaction t, boolean isNewTransaction){
         if (t.getFromId() != null) {
             if (t.getAmount() <= 0)
                 return false;
             if (Objects.equals(t.getFromId(), t.getToId()))
                 return false;
-            if (GetUserBalance(t.getFromId(), isNewTransaction) < t.getAmount())
+            if (getUserBalance(t.getFromId(), isNewTransaction) < t.getAmount())
                 return false;
         }
         return true;
     }
 
-    public ArrayList<Transaction> GetUserTransactionHistory(String userId){
+    public ArrayList<Transaction> getUserTransactionHistory(String userId){
         return this.blockChain.stream()
                 .flatMap(block -> block.getTransactions()
-                        .stream().filter(transaction -> transaction.InvolvesUser(userId)))
+                        .stream().filter(transaction -> transaction.involvesUser(userId)))
                 .collect(Collectors.toCollection(ArrayList::new));
     }
 }

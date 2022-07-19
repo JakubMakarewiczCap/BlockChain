@@ -24,7 +24,7 @@ public class Block {
 
     private String hash;
     private String prevHash;
-    public ArrayList<Transaction> transactions;
+    public final ArrayList<Transaction> transactions;
     private final Long timestamp;
     private int nonce;
 
@@ -37,14 +37,14 @@ public class Block {
         timestamp = System.currentTimeMillis();
         this.prevHash = prevHash;
         this.transactions = new ArrayList<>();
-        this.hash = this.GenerateHash();
+        this.hash = this.generateHash();
         this.nonce = 0;
     }
     public Block(String prevHash, ArrayList<Transaction> transactions){
         timestamp = System.currentTimeMillis();
         this.prevHash = prevHash;
         this.transactions = transactions;
-        this.hash = this.GenerateHash();
+        this.hash = this.generateHash();
         this.nonce = 0;
     }
     public String getHash() {
@@ -61,18 +61,23 @@ public class Block {
 
     public void addTransaction(Transaction transaction) {
         this.transactions.add(transaction);
-        this.hash = this.GenerateHash();
+        this.hash = this.generateHash();
     }
 
-    public String TransactionsToString(){
+    public String serializeTransactionsToString(){
         return this.transactions.stream()
                 .map(Transaction::toString)
                 .collect(Collectors.joining(","));
     }
-    public String GenerateHash(){
+
+    public void setHash(String hash) {
+        this.hash = hash;
+    }
+
+    public String generateHash(){
         String toHash = this.prevHash
                 + this.timestamp.toString()
-                + this.TransactionsToString()
+                + this.serializeTransactionsToString()
                 + this.nonce;
         try {
             MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
@@ -91,7 +96,7 @@ public class Block {
         }
     }
 
-    public String ToJson(){
+    public String toJson(){
         return new Gson().toJson(this);
     }
 
@@ -111,11 +116,11 @@ public class Block {
         return true;
     }
 
-    public void Mine(int difficulty){
+    public void mine(int difficulty){
         while (!(this.hash.substring(0, difficulty).
                 equals("0".repeat(difficulty)))){
             this.nonce++;
-            this.hash = this.GenerateHash();
+            this.hash = this.generateHash();
         }
     }
 }

@@ -9,13 +9,13 @@ import org.springframework.stereotype.Component;
 public class Miner{
     private boolean run = false;
     @Async
-    public void runMiner(BlockChain blockChain){
+    public void runMiner(BlockChain blockChain, String userId){
         this.run = true;
         while (this.run){
-            Block block = blockChain.GetNewBlock();
-            block.Mine(blockChain.difficulty);
-            blockChain.AddBlock(block);
-            blockChain.ToFile("blockchain.json");
+            Block block = blockChain.getNewBlock(userId);
+            block.mine(blockChain.difficulty);
+            blockChain.addBlock(block);
+            blockChain.serializeToFile("blockchain.json");
             System.out.println("mined");
         }
     }

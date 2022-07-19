@@ -12,15 +12,15 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class ConsoleHelper {
-    private static SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy hh:mm:ss");
+    private static final SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy hh:mm:ss");
 
-    public static String ReadString(String message) throws IOException {
+    public static String readString(String message) throws IOException {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         System.out.print(message);
         return br.readLine();
     }
 
-    public static Integer ReadInt(String message) throws IOException{
+    public static Integer readInt(String message) throws IOException{
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         System.out.print(message);
         try {
@@ -31,11 +31,11 @@ public class ConsoleHelper {
         }
     }
 
-    public static void PrintBlockchain(BlockChain blockChain){
-        System.out.println(ConsoleHelper.BuildBlockChainString(blockChain.getBlockChain())
+    public static void printBlockchain(BlockChain blockChain){
+        System.out.println(ConsoleHelper.buildBlockChainString(blockChain.getBlockChain())
                 + "\nBlockchain length: "+blockChain.getBlockChain().size());
     }
-    public static void PrintBlockchain(BlockChain blockChain, int skip, int take){
+    public static void printBlockchain(BlockChain blockChain, int skip, int take){
         if (skip<0||take<=0) System.out.println("Skip and take cannot be <0");
         if (skip>=blockChain.getBlockChain().size())
             System.out.println("Skip: " + skip
@@ -44,7 +44,7 @@ public class ConsoleHelper {
         if (skip>0)
             stringBuilder.append(String.format("%50s\n", ".").repeat(2))
                     .append(String.format("%50s", "V"));
-        stringBuilder.append(ConsoleHelper.BuildBlockChainString(
+        stringBuilder.append(ConsoleHelper.buildBlockChainString(
                 blockChain.getBlockChain()
                         .stream()
                         .skip(skip)
@@ -56,7 +56,7 @@ public class ConsoleHelper {
         System.out.println(stringBuilder);
     }
 
-    public static void PrintTransactionHistory(ArrayList<Transaction> transactions){
+    public static void printTransactionHistory(ArrayList<Transaction> transactions){
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append("-".repeat(100)).append("\n");
         for (Transaction transaction : (ArrayList<Transaction>) transactions.clone()) {
@@ -68,17 +68,15 @@ public class ConsoleHelper {
         stringBuilder.append("-".repeat(100));
         System.out.println(stringBuilder);
     }
-    private static String BuildBlockChainString(LinkedList<Block> blockChain){
+    private static String buildBlockChainString(LinkedList<Block> blockChain){
         StringBuilder stringBuilder = new StringBuilder();
-        for(Iterator<Block> itr = ((LinkedList<Block>)blockChain.clone()).iterator();
-            itr.hasNext();){
-            Block block = itr.next();
+        for (Block block : (LinkedList<Block>) blockChain.clone()) {
             stringBuilder.append("\n");
-            stringBuilder.append(ConsoleHelper.BuildBlockString(block));
+            stringBuilder.append(ConsoleHelper.buildBlockString(block));
         }
         return stringBuilder.substring(0,stringBuilder.length()-2);
     }
-    private static String BuildBlockString(Block block){
+    private static String buildBlockString(Block block){
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append("-".repeat(100));
         stringBuilder.append(String.format("\n| depth: %-89s |", block.getDepth()));

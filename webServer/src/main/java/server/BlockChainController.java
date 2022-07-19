@@ -20,21 +20,21 @@ public class BlockChainController {
     @PostConstruct
     public void initialize() {
         try {
-            blockChain = BlockChain.FromFile("blockchain.json");
+            blockChain = BlockChain.deserializeFromFile("blockchain.json");
         }
         catch(Exception e){
             blockChain = new BlockChain(6);
         }
-        this.blockChain.addPropertyChangeListener(e->this.FireBlockChainUpdate());
-        this.miner.runMiner(this.blockChain);
+        this.blockChain.addPropertyChangeListener(e->this.fireBlockChainUpdate());
+        this.miner.runMiner(this.blockChain, "serverMiner");
     }
     @MessageMapping("/get")
     @SendTo("/blockchain")
-    public String BlockChainUpdate() {
-        return this.blockChain.ToJson();
+    public String blockChainUpdate() {
+        return this.blockChain.toJson();
     }
-    public void FireBlockChainUpdate() {
-        this.template.convertAndSend("/blockchain", this.blockChain.ToJson());
+    public void fireBlockChainUpdate() {
+        this.template.convertAndSend("/blockchain", this.blockChain.toJson());
     }
 
 }

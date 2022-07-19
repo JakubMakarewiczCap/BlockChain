@@ -19,40 +19,30 @@ public class CLI {
 
         boolean continueRunning = true;
         while (continueRunning){
-            int action = this.CreateGetActionWindow();
-            switch (action){
-                case 0:
-                    continueRunning = false;
-                    break;
-                case 1:
-                    this.Mine();
-                    break;
-                case 2:
-                    this.WalletScreen();
-                    break;
-                case 3:
-                    this.BlockChainOptionsScreen();
-                    break;
-                case 4:
-                    this.ToggleMiner();
-                    break;
+            int action = this.createGetActionWindow();
+            switch (action) {
+                case 0 -> continueRunning = false;
+                case 1 -> this.mine();
+                case 2 -> this.walletScreen();
+                case 3 -> this.blockChainOptionsScreen();
+                case 4 -> this.toggleMiner();
             }
         }
-        this.OnExit();
+        this.onExit();
     }
 
     private void Init() throws IOException {
-        this.path = ConsoleHelper.ReadString("Enter path to json file: ");
+        this.path = ConsoleHelper.readString("Enter path to json file: ");
         try{
-            this.blockChain = BlockChain.FromFile(this.path);
+            this.blockChain = BlockChain.deserializeFromFile(this.path);
         }catch (Exception e){
             System.out.println(e.getMessage());
             System.out.println("Initializing Blockchain");
             Integer difficulty = null;
             while (difficulty ==null){
-                difficulty = ConsoleHelper.ReadInt("Enter blockchain mining difficulty: ");
+                difficulty = ConsoleHelper.readInt("Enter blockchain mining difficulty: ");
                 if (difficulty != null
-                        && !BlockChain.IsDifficultyValid(difficulty)){
+                        && !BlockChain.isDifficultyValid(difficulty)){
                     System.out.println("invalid difficulty: " + difficulty);
                     difficulty = null;
                 }
@@ -60,21 +50,22 @@ public class CLI {
             this.blockChain = new BlockChain(difficulty);
         }
     }
-    private void OnExit(){
-        this.blockChain.ToFile(this.path);
+    private void onExit(){
+        this.blockChain.serializeToFile(this.path);
     }
     //region Windows
-    private int CreateGetActionWindow() throws IOException {
+    private int createGetActionWindow() throws IOException {
         System.out.println("=".repeat(148));
         Integer action = null;
         while (action ==null) {
-            action = ConsoleHelper.ReadInt("""
+            action = ConsoleHelper.readInt("""
                     Choose action:\s
                     1. mine new block
                     2. get user info
                     3. show blockchain options
                     4. toggle miner
-                    0. close app""");
+                    5. create new transaction
+                    0. close app"""); // TODO: create logic for 5.
             if (action != null && (action < 0 || action > 5)){
                 System.out.println("invalid action: " + action);
                 action = null;
@@ -83,23 +74,23 @@ public class CLI {
         return action;
     }
     //region Action Windows
-    private void Mine(){
-        Block block = blockChain.GetNewBlockForMining("ConsoleUser");
-        block.Mine(blockChain.difficulty);
-        boolean mined = blockChain.AddBlock(block, true);
+    private void mine(){
+        Block block = blockChain.getNewBlock("ConsoleUser");
+        block.mine(blockChain.difficulty);
+        boolean mined = blockChain.addBlock(block);
         if (mined) {
             System.out.println("Mined block");
         } else {
             System.out.println("Could not mine block");
         }
     }
-    private void BlockInfoScreen(){}
-    private void WalletScreen() throws IOException {
+    private void blockInfoScreen(){}
+    private void walletScreen() throws IOException {
         System.out.println("-".repeat(70)+" Wallet "+"-".repeat(69));
-        var userId = ConsoleHelper.ReadString("Provide UserID: ");
+        var userId = ConsoleHelper.readString("Provide UserID: ");
         Integer action = null;
         while (action ==null) {
-            action = ConsoleHelper.ReadInt("""
+            action = ConsoleHelper.readInt("""
                     Choose action:\s
                     1. get balance
                     2. get history
@@ -109,24 +100,24 @@ public class CLI {
                 action = null;
             }
         }
-        switch (action){
+        switch (action) {
             case 0:
                 return;
             case 1:
-                System.out.printf("User: %s balance: %f%n", userId, blockChain.GetUserBalance(userId));
+                System.out.printf("User: %s balance: %f%n", userId, blockChain.getUserBalance(userId));
                 break;
             case 2:
                 System.out.printf("User: %s transaction history:%n", userId);
-                ConsoleHelper.PrintTransactionHistory(blockChain.GetUserTransactionHistory(userId));
+                ConsoleHelper.printTransactionHistory(blockChain.getUserTransactionHistory(userId));
                 break;
         }
     }
 
-    private void BlockChainOptionsScreen() throws IOException {
+    private void blockChainOptionsScreen() throws IOException {
         System.out.println("-".repeat(68)+" BlockChain "+"-".repeat(68));
         Integer action = null;
         while (action ==null) {
-            action = ConsoleHelper.ReadInt("""
+            action = ConsoleHelper.readInt("""
                     Choose action:\s
                     1. show whole
                     2. show range
@@ -141,20 +132,21 @@ public class CLI {
             case 0:
                 return;
             case 1:
-                ConsoleHelper.PrintBlockchain(this.blockChain);
+                ConsoleHelper.printBlockchain(this.blockChain);
                 break;
             case 2:
-                Integer skip = ConsoleHelper.ReadInt("Skip: ");
-                Integer take = ConsoleHelper.ReadInt("Take: ");
+                Integer skip = ConsoleHelper.readInt("Skip: ");
+                Integer take = ConsoleHelper.readInt("Take: ");
                 if (skip == null || take == null)
                     break;
-                ConsoleHelper.PrintBlockchain(this.blockChain, skip, take);
+                ConsoleHelper.printBlockchain(this.blockChain, skip, take);
                 break;
             case 3:
-                ConsoleHelper.PrintBlockchain(this.blockChain, this.blockChain.getBlockChain().size()-1, 1);
+                ConsoleHelper.printBlockchain(this.blockChain, this.blockChain.getBlockChain().size()-1, 1);
+                break;
         }
     }
-    private void ToggleMiner(){
+    private void toggleMiner(){
         if (this.miner.isRun()) {
             System.out.println("Stopping Miner..");
             this.miner.stopMiner();
@@ -164,8 +156,8 @@ public class CLI {
             this.miner.runMiner(this.blockChain, "ConsoleUser");
         }
     }
-    private void ShowBlockChain(){
-        ConsoleHelper.PrintBlockchain(blockChain);
+    private void showBlockChain(){
+        ConsoleHelper.printBlockchain(blockChain);
     }
     //endregion
     //endregion

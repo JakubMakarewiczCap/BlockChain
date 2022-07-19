@@ -16,44 +16,48 @@ class BlockChainTest {
     @BeforeEach
     void initializeChain(){
         blockChain = new BlockChain(1);
-        Block b1 = new Block(blockChain.GetLast().getHash(), new ArrayList<>());
-        b1.Mine(blockChain.difficulty);
-        blockChain.AddBlock(b1);
-        Block b2 = new Block(blockChain.GetLast().getHash(), new ArrayList<>());
-        b2.Mine(blockChain.difficulty);
-        blockChain.AddBlock(b2);
+        Block b1 = blockChain.getNewBlock("");
+        b1.mine(blockChain.difficulty);
+        blockChain.addBlock(b1);
+        Block b2 = blockChain.getNewBlock("");
+        b2.mine(blockChain.difficulty);
+        blockChain.addBlock(b2);
     }
     @Test
     void addBlock() {
-        assertFalse(blockChain.AddBlock(new Block("1234", new ArrayList<>())));
-        assertTrue(blockChain.AddBlock(new Block(blockChain.GetLast().getHash(), new ArrayList<>())));
+        assertFalse(blockChain.addBlock(new Block("1234", new ArrayList<>())));
+        Block b1 = blockChain.getNewBlock("");
+        b1.mine(blockChain.difficulty);
+        assertTrue(blockChain.addBlock(b1));
     }
 
     @Test
     void verifyNewBlock() {
-        assertFalse(blockChain.VerifyNewBlock(new Block("1234", new ArrayList<>())));
-        assertTrue(blockChain.VerifyNewBlock(new Block(blockChain.GetLast().getHash(), new ArrayList<>())));
+        assertFalse(blockChain.verifyNewBlock(new Block("1234", new ArrayList<>())));
+        Block b1 = blockChain.getNewBlock("");
+        b1.mine(blockChain.difficulty);
+        assertTrue(blockChain.verifyNewBlock(b1));
     }
 
     @Test
     void verifyBlockChain() {
-        assertTrue(blockChain.VerifyBlockChain());
-        Block b1 = new Block(blockChain.GetLast().getHash(), new ArrayList<>());
-        b1.Mine(blockChain.difficulty);
-        blockChain.AddBlock(b1);
-        assertTrue(blockChain.VerifyBlockChain());
+        assertTrue(blockChain.verifyBlockChain());
+        Block b1 = blockChain.getNewBlock("");
+        b1.mine(blockChain.difficulty);
+        blockChain.addBlock(b1);
+        assertTrue(blockChain.verifyBlockChain());
         Block b2 = new Block("blockChain.GetLast().getHash()", new ArrayList<>());
-        b2.Mine(blockChain.difficulty);
+        b2.mine(blockChain.difficulty);
         blockChain.getBlockChain().add(b2);
-        assertFalse(blockChain.VerifyBlockChain());
+        assertFalse(blockChain.verifyBlockChain());
     }
 
     @Test
     void serializationTest(){
-        blockChain.ToFile("test.json");
-        BlockChain blockChain2 = BlockChain.FromFile("test.json");
+        blockChain.serializeToFile("test.json");
+        BlockChain blockChain2 = BlockChain.deserializeFromFile("test.json");
         assertEquals(blockChain, blockChain2);
-        blockChain2.GetLast().transactions.add(new Transaction("","",1, System.currentTimeMillis()));
+        blockChain2.getLastBlock().transactions.add(new Transaction("","",1, System.currentTimeMillis()));
         assertNotEquals(blockChain, blockChain2);
     }
 
@@ -66,40 +70,40 @@ class BlockChainTest {
             blockChain.addPendingTransaction(new Transaction(null, "3", 10,System.currentTimeMillis()));
             blockChain.addPendingTransaction(new Transaction("1", "2", 2,System.currentTimeMillis()));
             blockChain.addPendingTransaction(new Transaction("3", "2", 5,System.currentTimeMillis()));
-            Block b1 = blockChain.GetNewBlockForMining("1");
-            b1.Mine(blockChain.difficulty);
-            blockChain.AddBlock(b1, true);
+            Block b1 = blockChain.getNewBlock("1");
+            b1.mine(blockChain.difficulty);
+            blockChain.addBlock(b1);
 
             blockChain.addPendingTransaction(new Transaction("2", "1", 6,System.currentTimeMillis()));
             blockChain.addPendingTransaction(new Transaction("3", "4", 3,System.currentTimeMillis()));
-            Block b2 = blockChain.GetNewBlockForMining("1");
-            b2.Mine(blockChain.difficulty);
-            blockChain.AddBlock(b2, true);
+            Block b2 = blockChain.getNewBlock("1");
+            b2.mine(blockChain.difficulty);
+            blockChain.addBlock(b2);
         }
 
         @Test
         void getUserBalanceTest(){
-            assertEquals(10, blockChain.GetUserBalance("1"));
-            assertEquals(11, blockChain.GetUserBalance("2"));
-            assertEquals(2, blockChain.GetUserBalance("3"));
-            assertEquals(3, blockChain.GetUserBalance("4"));
+            assertEquals(10, blockChain.getUserBalance("1"));
+            assertEquals(11, blockChain.getUserBalance("2"));
+            assertEquals(2, blockChain.getUserBalance("3"));
+            assertEquals(3, blockChain.getUserBalance("4"));
         }
         @Test
         void verifyTransactionTest(){
-            assertTrue(blockChain.VerifyTransaction(new Transaction(null, "2", 0,System.currentTimeMillis())));
-            assertTrue(blockChain.VerifyTransaction(new Transaction("1", "2", 3,System.currentTimeMillis())));
-            assertFalse(blockChain.VerifyTransaction(new Transaction("2", "2", 3,System.currentTimeMillis())));
-            assertFalse(blockChain.VerifyTransaction(new Transaction("3", "2", 23,System.currentTimeMillis())));
-            assertFalse(blockChain.VerifyTransaction(new Transaction("3", "2", -1000,System.currentTimeMillis())));
+            assertTrue(blockChain.verifyTransaction(new Transaction(null, "2", 0,System.currentTimeMillis())));
+            assertTrue(blockChain.verifyTransaction(new Transaction("1", "2", 3,System.currentTimeMillis())));
+            assertFalse(blockChain.verifyTransaction(new Transaction("2", "2", 3,System.currentTimeMillis())));
+            assertFalse(blockChain.verifyTransaction(new Transaction("3", "2", 23,System.currentTimeMillis())));
+            assertFalse(blockChain.verifyTransaction(new Transaction("3", "2", -1000,System.currentTimeMillis())));
         }
 
         @Test
         void getUserTransactionHistoryTest(){
-            assertEquals(5,blockChain.GetUserTransactionHistory("1").size());
-            assertEquals(4,blockChain.GetUserTransactionHistory("2").size());
-            assertEquals(3,blockChain.GetUserTransactionHistory("3").size());
-            assertEquals(1,blockChain.GetUserTransactionHistory("4").size());
-            assertEquals(0,blockChain.GetUserTransactionHistory("5").size());
+            assertEquals(5,blockChain.getUserTransactionHistory("1").size());
+            assertEquals(4,blockChain.getUserTransactionHistory("2").size());
+            assertEquals(3,blockChain.getUserTransactionHistory("3").size());
+            assertEquals(1,blockChain.getUserTransactionHistory("4").size());
+            assertEquals(0,blockChain.getUserTransactionHistory("5").size());
         }
     }
 }

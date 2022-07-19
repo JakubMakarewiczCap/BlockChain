@@ -12,9 +12,9 @@ public class Miner{
     public void runMiner(BlockChain blockChain, String userId){
         this.run = true;
         while (this.run){
-            Block block = blockChain.GetNewBlockForMining(userId);
-            block.Mine(blockChain.difficulty);
-            blockChain.AddBlock(block,true);
+            Block block = blockChain.getNewBlock(userId);
+            block.mine(blockChain.difficulty);
+            blockChain.addBlock(block);
         }
     }
 

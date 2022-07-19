@@ -16,14 +16,14 @@ class BlockTest {
         Block block = new Block();
         Transaction t1 = new Transaction("user1","user2", 100,System.currentTimeMillis());
         block.addTransaction(t1);
-        String res = block.ToJson();
+        String res = block.toJson();
         System.out.println();
     }
     @org.junit.jupiter.api.Test
     void mine(){
         int difficulty = 3;
         Block block = new Block("1");
-        block.Mine(difficulty);
+        block.mine(difficulty);
         assertEquals(block.getHash().substring(0, difficulty), "0".repeat(difficulty));
     }
 }
