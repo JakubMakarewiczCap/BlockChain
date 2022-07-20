@@ -1,5 +1,7 @@
 package blockChainClasses;
 
+import blockChainClasses.verificationResults.BlockchainVerificationResult;
+import blockChainClasses.verificationResults.BlockchainVerificationResultEnum;
 import com.google.gson.Gson;
 
 import java.beans.PropertyChangeListener;
@@ -13,8 +15,9 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-public class BlockChain {
+public class Blockchain {
     private transient final PropertyChangeSupport support = new PropertyChangeSupport(this);
     private final LinkedList<Block> blockChain;
     private final ArrayList<Transaction> pendingTransactions;
@@ -39,18 +42,18 @@ public class BlockChain {
         return blockChain;
     }
 
-    public BlockChain(){
+    public Blockchain(){
         this.blockChain = new LinkedList<>();
         this.blockChain.add(new Block("0", new ArrayList<>()));
         this.difficulty = 4;
         this.miningReward = 2;
         this.pendingTransactions = new ArrayList<>();
     }
-    public BlockChain(int difficulty){
+    public Blockchain(int difficulty){
         this();
         this.difficulty = difficulty;
     }
-    public BlockChain(int difficulty, double miningReward){
+    public Blockchain(int difficulty, double miningReward){
         this(difficulty);
         this.miningReward = miningReward;
     }
@@ -114,29 +117,32 @@ public class BlockChain {
      * This method verifies the blockChain.
      * If someone tinkers with the blockchain, this method will catch it
      * @return true if blockchain is valid, otherwise false*/ // TODO: return the invalid block
-    public boolean verifyBlockChain(){
+    public BlockchainVerificationResult verifyBlockChain(){
         if (this.blockChain.size() == 0)
-            return true;
+            return new BlockchainVerificationResult(BlockchainVerificationResultEnum.VALID, null);
         if (this.blockChain.size() == 1)
             return Objects.equals(this.blockChain.getFirst().generateHash(),
-                    this.blockChain.getFirst().getHash());
+                    this.blockChain.getFirst().getHash()) &&
+                    this.blockChain.getFirst().getTransactions().size() == 0?
+                    new BlockchainVerificationResult(BlockchainVerificationResultEnum.VALID, null) :
+                    new BlockchainVerificationResult(BlockchainVerificationResultEnum.INVALID_GENESIS_BLOCK, this.blockChain.getFirst());
         Iterator<Block> i = this.blockChain.iterator();
         Block prev = i.next();
         Block current;
         while (i.hasNext()) {
             current = i.next();
-            if (!Objects.equals(prev.getHash(), prev.generateHash()))
-                return false;
+            if (!Objects.equals(current.getHash(), current.generateHash()))
+                return new BlockchainVerificationResult(BlockchainVerificationResultEnum.INVALID_HASH, current);
             if (!Objects.equals(prev.getHash(), current.getPrevHash()))
-                return false;
+                return new BlockchainVerificationResult(BlockchainVerificationResultEnum.INVALID_PREV_HASH, current);
             if (!(current.getHash().substring(0, difficulty).
                     equals("0".repeat(difficulty))))
-                return false;
+                return new BlockchainVerificationResult(BlockchainVerificationResultEnum.INVALID_HASH, current);
             if (current.getTransactions().stream().anyMatch(t -> !this.verifyTransaction(t)))
-                return false;
+                return new BlockchainVerificationResult(BlockchainVerificationResultEnum.INVALID_TRANSACTIONS, current);
             prev = current;
         }
-        return true;
+        return new BlockchainVerificationResult(BlockchainVerificationResultEnum.VALID, null);
     }
 
     public String toJson(){
@@ -162,10 +168,10 @@ public class BlockChain {
         }
     }
 
-    public static BlockChain deserializeFromFile(String filepath) throws RuntimeException{
+    public static Blockchain deserializeFromFile(String filepath) throws RuntimeException{
         try {
             BufferedReader reader =  new BufferedReader(new FileReader(filepath));
-            BlockChain result = new Gson().fromJson(reader,BlockChain.class);
+            Blockchain result = new Gson().fromJson(reader, Blockchain.class);
             reader.close();
             return result;
         } catch (Exception e) {
@@ -182,7 +188,7 @@ public class BlockChain {
         if (other == null) return false;
         if (other == this) return true;
         if (other.getClass() != getClass()) return false;
-        BlockChain rhs = (BlockChain) other;
+        Blockchain rhs = (Blockchain) other;
         if (this.blockChain.size() != rhs.blockChain.size())
             return false;
         if (!Objects.equals(this.blockChain, rhs.blockChain))
@@ -210,26 +216,51 @@ public class BlockChain {
      * @return Double - user's balance*/
     public double getUserBalance(String userId, boolean includePending){
         double balance=0;
-        for (Block block :
-                this.blockChain) {
-            for (Transaction transaction :
-                    block.getTransactions()) {
-                if (Objects.equals(userId, transaction.getFromId()))
-                    balance -= transaction.getAmount();
-                if (Objects.equals(transaction.getToId(), userId))
-                    balance += transaction.getAmount();
-            }
-        }
-        if (includePending) {
-            for (Transaction transaction :
-                    this.pendingTransactions) {
-                if (Objects.equals(userId, transaction.getFromId()))
-                    balance -= transaction.getAmount();
-                if (Objects.equals(transaction.getToId(), userId))
-                    balance += transaction.getAmount();
-            }
+        for (Transaction transaction :
+                this.getAllTransactions(includePending)) {
+            if (Objects.equals(userId, transaction.getFromId()))
+                balance -= transaction.getAmount();
+            if (Objects.equals(transaction.getToId(), userId))
+                balance += transaction.getAmount();
         }
         return balance;
+    }
+    public double getUserBalance(String userId, Transaction limitingTransaction){
+        double balance=0;
+        for (Transaction transaction :
+                this.getAllTransactions(limitingTransaction)) {
+            if (Objects.equals(userId, transaction.getFromId()))
+                balance -= transaction.getAmount();
+            if (Objects.equals(transaction.getToId(), userId))
+                balance += transaction.getAmount();
+        }
+        return balance;
+    }
+
+    public boolean transactionInBlockChain(Transaction transaction){
+        var allTransactions = Stream.concat(
+                this.blockChain.stream().flatMap(block -> block.getTransactions().stream()),
+                this.pendingTransactions.stream());
+        return allTransactions
+                .filter(t -> Objects.equals(t, transaction))
+                .findFirst().orElse(null) != null;
+    }
+    public ArrayList<Transaction> getAllTransactions(boolean includePending){
+        return includePending?
+                Stream.concat(
+                    this.blockChain.stream().flatMap(block -> block.getTransactions().stream()),
+                    this.pendingTransactions.stream())
+                .collect(Collectors.toCollection(ArrayList::new))
+                    :
+                this.blockChain.stream().flatMap(block -> block.getTransactions().stream())
+                        .collect(Collectors.toCollection(ArrayList::new));
+    }
+    public ArrayList<Transaction> getAllTransactions(Transaction limitingTransaction){
+        return Stream.concat(
+                this.blockChain.stream().flatMap(block -> block.getTransactions().stream()),
+                this.pendingTransactions.stream())
+                .takeWhile(t -> !Objects.equals(t, limitingTransaction))
+                .collect(Collectors.toCollection(ArrayList::new));
     }
 
     /**
@@ -245,13 +276,21 @@ public class BlockChain {
      * @param isNewTransaction true if this is the most recently added transaction
      * @return true if transaction is valid, otherwise false*/
     public boolean verifyTransaction(Transaction transaction, boolean isNewTransaction){
+        if (isNewTransaction && transactionInBlockChain(transaction))
+            return false;
         if (transaction.getFromId() != null) {
             if (transaction.getAmount() <= 0)
                 return false;
             if (Objects.equals(transaction.getFromId(), transaction.getToId()))
                 return false;
-            if (getUserBalance(transaction.getFromId(), isNewTransaction) < transaction.getAmount())
-                return false;
+            if (isNewTransaction) {
+                if (getUserBalance(transaction.getFromId(), true) < transaction.getAmount())
+                    return false;
+            }
+            else {
+                if (getUserBalance(transaction.getFromId(), transaction) < transaction.getAmount())
+                    return false;
+            }
         }
         return true;
     }
@@ -261,9 +300,10 @@ public class BlockChain {
      * @param userId user's id
      * @return List of all transactions in which user is either sender or receiver*/
     public ArrayList<Transaction> getUserTransactionHistory(String userId){
-        return this.blockChain.stream()
-                .flatMap(block -> block.getTransactions()
-                        .stream().filter(transaction -> transaction.involvesUser(userId)))
+        return Stream.concat(
+                        this.blockChain.stream().flatMap(block -> block.getTransactions().stream()),
+                        this.pendingTransactions.stream())
+                .filter(transaction -> transaction.involvesUser(userId))
                 .collect(Collectors.toCollection(ArrayList::new));
     }
 }

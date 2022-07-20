@@ -1,7 +1,7 @@
 package consoleApp;
 
 import blockChainClasses.Block;
-import blockChainClasses.BlockChain;
+import blockChainClasses.Blockchain;
 import blockChainClasses.Transaction;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -12,7 +12,7 @@ import java.io.IOException;
 public class CLI {
     @Autowired
     private Miner miner;
-    private BlockChain blockChain;
+    private Blockchain blockChain;
     private String path;
 
     public void run() throws IOException {
@@ -36,7 +36,7 @@ public class CLI {
     private void Init() throws IOException {
         this.path = ConsoleHelper.readString("Enter path to json file: ");
         try{
-            this.blockChain = BlockChain.deserializeFromFile(this.path);
+            this.blockChain = Blockchain.deserializeFromFile(this.path);
         }catch (Exception e){
             System.out.println(e.getMessage());
             System.out.println("Initializing Blockchain");
@@ -44,12 +44,12 @@ public class CLI {
             while (difficulty ==null){
                 difficulty = ConsoleHelper.readInt("Enter blockchain mining difficulty: ");
                 if (difficulty != null
-                        && !BlockChain.isDifficultyValid(difficulty)){
+                        && !Blockchain.isDifficultyValid(difficulty)){
                     System.out.println("invalid difficulty: " + difficulty);
                     difficulty = null;
                 }
             }
-            this.blockChain = new BlockChain(difficulty);
+            this.blockChain = new Blockchain(difficulty);
         }
     }
     private void onExit(){

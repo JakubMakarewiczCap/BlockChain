@@ -1,7 +1,7 @@
 package consoleApp;
 
 import blockChainClasses.Block;
-import blockChainClasses.BlockChain;
+import blockChainClasses.Blockchain;
 import blockChainClasses.Transaction;
 
 import java.io.BufferedReader;
@@ -31,11 +31,11 @@ public class ConsoleHelper {
         }
     }
 
-    public static void printBlockchain(BlockChain blockChain){
+    public static void printBlockchain(Blockchain blockChain){
         System.out.println(ConsoleHelper.buildBlockChainString(
                 blockChain, 0, blockChain.getBlockChain().size()));
     }
-    public static void printBlockchain(BlockChain blockChain, int skip, int take){
+    public static void printBlockchain(Blockchain blockChain, int skip, int take){
         if (skip<0||take<=0) System.out.println("Skip and take cannot be <0");
         if (skip>=blockChain.getBlockChain().size())
             System.out.println("Skip: " + skip
@@ -56,7 +56,7 @@ public class ConsoleHelper {
         stringBuilder.append("-".repeat(100));
         System.out.println(stringBuilder);
     }
-    private static String buildBlockChainString(BlockChain blockChain,
+    private static String buildBlockChainString(Blockchain blockChain,
                                                 int skip, int take){
         LinkedList<Block> blockChainList = blockChain.getBlockChain()
                 .stream()
@@ -122,7 +122,7 @@ public class ConsoleHelper {
         return stringBuilder.toString();
     }
 
-    public static void printBlock(BlockChain blockChain, String hash) {
+    public static void printBlock(Blockchain blockChain, String hash) {
         Block block = blockChain.getBlockChain().stream()
                 .filter(b -> Objects.equals(b.getHash(), hash))
                 .findFirst()

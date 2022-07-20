@@ -1,7 +1,7 @@
 package server;
 
 import blockChainClasses.Block;
-import blockChainClasses.BlockChain;
+import blockChainClasses.Blockchain;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 public class Miner{
     private boolean run = false;
     @Async
-    public void runMiner(BlockChain blockChain, String userId){
+    public void runMiner(Blockchain blockChain, String userId){
         this.run = true;
         while (this.run){
             Block block = blockChain.getNewBlock(userId);
