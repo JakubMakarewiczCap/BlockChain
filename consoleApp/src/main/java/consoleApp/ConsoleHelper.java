@@ -32,28 +32,16 @@ public class ConsoleHelper {
     }
 
     public static void printBlockchain(BlockChain blockChain){
-        System.out.println(ConsoleHelper.buildBlockChainString(blockChain.getBlockChain())
-                + "\nBlockchain length: "+blockChain.getBlockChain().size());
+        System.out.println(ConsoleHelper.buildBlockChainString(
+                blockChain, 0, blockChain.getBlockChain().size()));
     }
     public static void printBlockchain(BlockChain blockChain, int skip, int take){
         if (skip<0||take<=0) System.out.println("Skip and take cannot be <0");
         if (skip>=blockChain.getBlockChain().size())
             System.out.println("Skip: " + skip
                     + "is bigger or equal to the blockchain length: " + blockChain.getBlockChain().size());
-        StringBuilder stringBuilder = new StringBuilder();
-        if (skip>0)
-            stringBuilder.append(String.format("%50s\n", ".").repeat(2))
-                    .append(String.format("%50s", "V"));
-        stringBuilder.append(ConsoleHelper.buildBlockChainString(
-                blockChain.getBlockChain()
-                        .stream()
-                        .skip(skip)
-                        .limit(take)
-                        .collect(Collectors.toCollection(LinkedList::new))));
-        if (skip+take-1 < blockChain.getBlockChain().size()-1)
-            stringBuilder.append(String.format("\n%50s\n", "V"))
-                    .append(String.format("%50s\n", ".").repeat(2));
-        System.out.println(stringBuilder);
+        System.out.println(ConsoleHelper.buildBlockChainString(
+                blockChain, skip, take));
     }
 
     public static void printTransactionHistory(ArrayList<Transaction> transactions){
@@ -68,13 +56,43 @@ public class ConsoleHelper {
         stringBuilder.append("-".repeat(100));
         System.out.println(stringBuilder);
     }
-    private static String buildBlockChainString(LinkedList<Block> blockChain){
+    private static String buildBlockChainString(BlockChain blockChain,
+                                                int skip, int take){
+        LinkedList<Block> blockChainList = blockChain.getBlockChain()
+                .stream()
+                .skip(skip)
+                .limit(take)
+                .collect(Collectors.toCollection(LinkedList::new));
         StringBuilder stringBuilder = new StringBuilder();
-        for (Block block : (LinkedList<Block>) blockChain.clone()) {
+
+        // Building block list
+        if (skip>0)
+            stringBuilder.append(String.format("%50s\n", ".").repeat(2))
+                    .append(String.format("%50s", "V"));
+        for (Block block : (LinkedList<Block>) blockChainList.clone()) {
             stringBuilder.append("\n");
             stringBuilder.append(ConsoleHelper.buildBlockString(block));
+            stringBuilder.append(String.format("\n %50s", "V"));
         }
-        return stringBuilder.substring(0,stringBuilder.length()-2);
+        stringBuilder.setLength(stringBuilder.length()-2);
+        if (skip+take-1 < blockChain.getBlockChain().size()-1)
+            stringBuilder.append(String.format("\n%50s\n", "V"))
+                    .append(String.format("%50s\n", ".").repeat(2));
+
+        // Building blockchain info
+        stringBuilder.append(String.format("\ndifficulty: %s\n", blockChain.getDifficulty()));
+        stringBuilder.append(String.format("mining reward: %s\n", blockChain.getMiningReward()));
+
+        // Building pending transactions
+        stringBuilder.append("Pending Transactions: \n");
+        for (Transaction transaction :
+                blockChain.getPendingTransactions()) {
+            stringBuilder.append(String.format("%-96s\n",
+                    String.format(">from: %-15s to: %-15s amount: %-19f date: %s",
+                            transaction.getFromId(), transaction.getToId(),
+                            transaction.getAmount(), ConsoleHelper.dateFormat.format(new Date(transaction.getTimestamp())))));
+        }
+        return stringBuilder.toString();
     }
     private static String buildBlockString(Block block){
         StringBuilder stringBuilder = new StringBuilder();
@@ -101,7 +119,17 @@ public class ConsoleHelper {
                             transaction.getAmount(),ConsoleHelper.dateFormat.format(new Date(transaction.getTimestamp())))));
         }
         stringBuilder.append("-".repeat(100));
-        stringBuilder.append(String.format("\n %50s", "V"));
         return stringBuilder.toString();
+    }
+
+    public static void printBlock(BlockChain blockChain, String hash) {
+        Block block = blockChain.getBlockChain().stream()
+                .filter(b -> Objects.equals(b.getHash(), hash))
+                .findFirst()
+                .orElse(null);
+        if (block == null)
+            System.out.println("Block not found for hash: "+hash);
+        else
+            System.out.println(ConsoleHelper.buildBlockString(block));
     }
 }

@@ -59,6 +59,9 @@ public class Block {
         return transactions;
     }
 
+    /**
+     * This method adds a transaction to the block and recalculates its hash
+     * @param transaction Transaction to be added*/
     public void addTransaction(Transaction transaction) {
         this.transactions.add(transaction);
         this.hash = this.generateHash();
@@ -74,6 +77,10 @@ public class Block {
         this.hash = hash;
     }
 
+    /**
+     * This method is used to generate the hash of a block.
+     * @return String - the generated hash of this block.
+     */
     public String generateHash(){
         String toHash = this.prevHash
                 + this.timestamp.toString()
@@ -116,6 +123,11 @@ public class Block {
         return true;
     }
 
+    /**
+     * This method is used for mining a block.
+     * The block is mined when this method ends.
+     * @param difficulty the difficulty of target blockchain
+     * */
     public void mine(int difficulty){
         while (!(this.hash.substring(0, difficulty).
                 equals("0".repeat(difficulty)))){

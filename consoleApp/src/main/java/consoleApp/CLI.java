@@ -2,6 +2,7 @@ package consoleApp;
 
 import blockChainClasses.Block;
 import blockChainClasses.BlockChain;
+import blockChainClasses.Transaction;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -26,6 +27,7 @@ public class CLI {
                 case 2 -> this.walletScreen();
                 case 3 -> this.blockChainOptionsScreen();
                 case 4 -> this.toggleMiner();
+                case 5 -> this.createTransactionScreen();
             }
         }
         this.onExit();
@@ -65,7 +67,8 @@ public class CLI {
                     3. show blockchain options
                     4. toggle miner
                     5. create new transaction
-                    0. close app"""); // TODO: create logic for 5.
+                    0. close app
+                    """); // TODO: create logic for 5.
             if (action != null && (action < 0 || action > 5)){
                 System.out.println("invalid action: " + action);
                 action = null;
@@ -94,7 +97,8 @@ public class CLI {
                     Choose action:\s
                     1. get balance
                     2. get history
-                    0. return""");
+                    0. return
+                    """);
             if (action != null && (action < 0 || action > 2)){
                 System.out.println("invalid action: " + action);
                 action = null;
@@ -122,8 +126,10 @@ public class CLI {
                     1. show whole
                     2. show range
                     3. show last
-                    0. return""");
-            if (action != null && (action < 0 || action > 3)){
+                    4. find by hash
+                    0. return
+                    """);
+            if (action != null && (action < 0 || action > 4)){
                 System.out.println("invalid action: " + action);
                 action = null;
             }
@@ -144,6 +150,8 @@ public class CLI {
             case 3:
                 ConsoleHelper.printBlockchain(this.blockChain, this.blockChain.getBlockChain().size()-1, 1);
                 break;
+            case 4:
+                ConsoleHelper.printBlock(this.blockChain, ConsoleHelper.readString("Hash: "));
         }
     }
     private void toggleMiner(){
@@ -158,6 +166,26 @@ public class CLI {
     }
     private void showBlockChain(){
         ConsoleHelper.printBlockchain(blockChain);
+    }
+    private void createTransactionScreen() throws IOException {
+        String sender = ConsoleHelper.readString("Sender: ");
+        String recipient = ConsoleHelper.readString("Recipient: ");
+        Integer amount = null;
+        while (amount ==null) {
+            amount = ConsoleHelper.readInt("Amount: ");
+            if (amount != null && (amount <= 0)){
+                System.out.println("Invalid amount (amount has to be >= 0): " + amount);
+                amount = null;
+            }
+        }
+        double senderBalance = this.blockChain.getUserBalance(sender);
+        if (senderBalance < amount)
+            System.out.println("Sender's balance: " + senderBalance
+                    + " is not enough for amount: " + amount);
+        if (!this.blockChain.addPendingTransaction(new Transaction(sender, recipient, amount)))
+            System.out.println("Couldn't create transaction");
+        else
+            System.out.println("Transaction successfully created");
     }
     //endregion
     //endregion

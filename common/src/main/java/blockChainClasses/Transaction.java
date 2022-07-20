@@ -1,12 +1,15 @@
 package blockChainClasses;
 
 import java.util.Objects;
+import java.util.Random;
 
 public class Transaction {
     private final String fromId;
     private final String toId;
     private final double amount;
     private final long timestamp;
+    private final int index;
+    private static int counter = new Random().nextInt();
     public String getFromId() {
         return fromId;
     }
@@ -24,6 +27,10 @@ public class Transaction {
         this.toId = toId;
         this.amount = amount;
         this.timestamp = timestamp;
+        this.index = ++counter;
+    }
+    public Transaction(String fromId, String toId, double amount) {
+        this(fromId, toId, amount, System.currentTimeMillis());
     }
 
     @Override
@@ -47,11 +54,15 @@ public class Transaction {
                 ", toId='" + toId + '\'' +
                 ", amount=" + amount +
                 ", timestamp=" + timestamp +
+                ", index="+index+
                 '}';
     }
 
-    public boolean involvesUser(String user){
-        return Objects.equals(this.fromId, user) || Objects.equals(this.toId, user);
+    /**
+     * @param userId user
+     * @return true if user is either the sender or the receiver*/
+    public boolean involvesUser(String userId){
+        return Objects.equals(this.fromId, userId) || Objects.equals(this.toId, userId);
     }
 
     public long getTimestamp() {
