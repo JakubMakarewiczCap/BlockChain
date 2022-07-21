@@ -12,6 +12,11 @@ public class Transaction {
     private final long timestamp;
     private final int index;
     private static int counter = new Random().nextInt();
+
+    public String getHash() {
+        return hash;
+    }
+
     private final String hash;
 
     public String getFromId() {
@@ -31,7 +36,8 @@ public class Transaction {
         this.toId = toId;
         this.amount = amount;
         this.timestamp = timestamp;
-        this.index = ++counter;
+        counter = (++counter) % Integer.MAX_VALUE;
+        this.index = counter;
         this.hash = this.generateHash();
     }
     public Transaction(String fromId, String toId, double amount) {
@@ -76,7 +82,7 @@ public class Transaction {
         return timestamp;
     }
 
-    private String generateHash(){
+    public String generateHash(){
         String toHash = this.fromId
                 + this.toId
                 + this.index

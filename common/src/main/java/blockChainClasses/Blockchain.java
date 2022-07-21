@@ -1,7 +1,8 @@
 package blockChainClasses;
 
-import blockChainClasses.verificationResults.BlockchainVerificationResult;
-import blockChainClasses.verificationResults.BlockchainVerificationResultEnum;
+import blockChainClasses.utils.BlockchainFromFileResult;
+import blockChainClasses.utils.BlockchainVerificationResult;
+import blockChainClasses.utils.BlockchainVerificationResultEnum;
 import com.google.gson.Gson;
 
 import java.beans.PropertyChangeListener;
@@ -168,12 +169,13 @@ public class Blockchain {
         }
     }
 
-    public static Blockchain deserializeFromFile(String filepath) throws RuntimeException{
+    public static BlockchainFromFileResult deserializeFromFile(String filepath) throws RuntimeException{
         try {
             BufferedReader reader =  new BufferedReader(new FileReader(filepath));
             Blockchain result = new Gson().fromJson(reader, Blockchain.class);
             reader.close();
-            return result;
+            var verification = result.verifyBlockChain();
+            return new BlockchainFromFileResult(result, verification);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -282,6 +284,8 @@ public class Blockchain {
             if (transaction.getAmount() <= 0)
                 return false;
             if (Objects.equals(transaction.getFromId(), transaction.getToId()))
+                return false;
+            if (!Objects.equals(transaction.getHash(), transaction.generateHash()))
                 return false;
             if (isNewTransaction) {
                 if (getUserBalance(transaction.getFromId(), true) < transaction.getAmount())

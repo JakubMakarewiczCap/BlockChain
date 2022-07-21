@@ -47,13 +47,16 @@ public class ConsoleHelper {
     public static void printTransactionHistory(ArrayList<Transaction> transactions){
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append("-".repeat(100)).append("\n");
+        double sum=0;
         for (Transaction transaction : (ArrayList<Transaction>) transactions.clone()) {
             stringBuilder.append(String.format("| %-96s |\n",
                     String.format("from: %-15s to: %-15s amount: %-20f date: %s",
                             transaction.getFromId(), transaction.getToId(),
                             transaction.getAmount(), ConsoleHelper.dateFormat.format(new Date(transaction.getTimestamp())))));
+            sum+=transaction.getAmount();
         }
         stringBuilder.append("-".repeat(100));
+        stringBuilder.append(String.format("\nTotal: %.6f",  sum));
         System.out.println(stringBuilder);
     }
     private static String buildBlockChainString(Blockchain blockChain,

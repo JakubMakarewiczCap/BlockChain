@@ -69,7 +69,7 @@ public class Block {
 
     public String serializeTransactionsToString(){
         return this.transactions.stream()
-                .map(Transaction::toString)
+                .map(Transaction::getHash)
                 .collect(Collectors.joining(","));
     }
 

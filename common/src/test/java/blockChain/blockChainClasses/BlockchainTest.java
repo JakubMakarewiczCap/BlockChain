@@ -3,7 +3,7 @@ package blockChain.blockChainClasses;
 import blockChainClasses.Block;
 import blockChainClasses.Blockchain;
 import blockChainClasses.Transaction;
-import blockChainClasses.verificationResults.BlockchainVerificationResultEnum;
+import blockChainClasses.utils.BlockchainVerificationResultEnum;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -70,7 +70,7 @@ class BlockchainTest {
     @Test
     void serializationTest(){
         blockChain.serializeToFile("test.json");
-        Blockchain blockchain2 = Blockchain.deserializeFromFile("test.json");
+        Blockchain blockchain2 = Blockchain.deserializeFromFile("test.json").blockchain();
         assertEquals(blockChain, blockchain2);
         blockchain2.getLastBlock().transactions.add(new Transaction("","",1, System.currentTimeMillis()));
         assertNotEquals(blockChain, blockchain2);

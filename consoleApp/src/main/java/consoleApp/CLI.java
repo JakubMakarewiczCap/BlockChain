@@ -3,10 +3,15 @@ package consoleApp;
 import blockChainClasses.Block;
 import blockChainClasses.Blockchain;
 import blockChainClasses.Transaction;
+import blockChainClasses.utils.BlockchainVerificationResultEnum;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.stream.Collectors;
 
 @Component("CLI")
 public class CLI {
@@ -36,7 +41,18 @@ public class CLI {
     private void Init() throws IOException {
         this.path = ConsoleHelper.readString("Enter path to json file: ");
         try{
-            this.blockChain = Blockchain.deserializeFromFile(this.path);
+            var result = Blockchain.deserializeFromFile(this.path);
+            if (result.blockchainVerificationResult().verificationResult()
+                    == BlockchainVerificationResultEnum.VALID)
+                System.out.println("Blockchain is valid");
+            else{
+                System.out.println("Error: " + result.blockchainVerificationResult().verificationResult());
+                if (result.blockchainVerificationResult().invalidBlock() != null) {
+                    System.out.println("on block:");
+                    ConsoleHelper.printBlock(result.blockchain(), result.blockchainVerificationResult().invalidBlock().getHash());
+                }
+            }
+            this.blockChain = result.blockchain();
         }catch (Exception e){
             System.out.println(e.getMessage());
             System.out.println("Initializing Blockchain");
@@ -63,7 +79,7 @@ public class CLI {
             action = ConsoleHelper.readInt("""
                     Choose action:\s
                     1. mine new block
-                    2. get user info
+                    2. wallet
                     3. show blockchain options
                     4. toggle miner
                     5. create new transaction
@@ -111,8 +127,68 @@ public class CLI {
                 System.out.printf("User: %s balance: %f%n", userId, blockChain.getUserBalance(userId));
                 break;
             case 2:
-                System.out.printf("User: %s transaction history:%n", userId);
+                userTransactionHistoryScreen(userId);
+                break;
+        }
+    }
+    private void userTransactionHistoryScreen(String userId) throws IOException {
+        Integer action = null;
+        while (action ==null) {
+            action = ConsoleHelper.readInt("""
+                    Choose action:\s
+                    1. whole
+                    2. date range
+                    3. last n transactions
+                    0. return
+                    """);
+            if (action != null && (action < 0 || action > 3)){
+                System.out.println("invalid action: " + action);
+                action = null;
+            }
+        }
+        switch (action) {
+            case 0:
+                return;
+            case 1:
+                System.out.printf("User: %s transaction history:\n", userId);
                 ConsoleHelper.printTransactionHistory(blockChain.getUserTransactionHistory(userId));
+                break;
+            case 2:
+                SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yyyy");
+                var dateStartString = ConsoleHelper.readString("Since (dd-MM-yyyy, inclusive): ");
+                var dateEndString = ConsoleHelper.readString("To (dd-MM-yyyy, exclusive): ");
+                try {
+                    var dateStart = formatter.parse(dateStartString);
+                    var dateEnd = formatter.parse(dateEndString);
+                    System.out.printf("User: %s transaction history since: %s to: %s:\n",
+                            userId, dateStart.toString(), dateEnd.toString());
+                    ConsoleHelper.printTransactionHistory(
+                            blockChain.getUserTransactionHistory(userId)
+                                    .stream()
+                                    .dropWhile(t -> t.getTimestamp() < dateStart.getTime())
+                                    .takeWhile(t -> t.getTimestamp() < dateEnd.getTime())
+                                    .collect(Collectors.toCollection(ArrayList::new)));
+                }
+                catch (ParseException e){
+                    System.out.println(e.getMessage());
+                }
+                break;
+            case 3:
+                Integer n = null;
+                while (n ==null) {
+                    n = ConsoleHelper.readInt("How many?: ");
+                    if (n != null && (n <= 0)){
+                        System.out.println("invalid n: " + action);
+                        n = null;
+                    }
+                }
+                System.out.printf("User: %s transaction history (last %d):\n", userId, n);
+                var transactions = blockChain.getUserTransactionHistory(userId);
+                ConsoleHelper.printTransactionHistory(
+                                transactions
+                                .stream()
+                                .skip(transactions.size() - n)
+                                .collect(Collectors.toCollection(ArrayList::new)));
                 break;
         }
     }
@@ -127,9 +203,11 @@ public class CLI {
                     2. show range
                     3. show last
                     4. find by hash
+                    5. verify blockchain
+                    6. save blockchain
                     0. return
                     """);
-            if (action != null && (action < 0 || action > 4)){
+            if (action != null && (action < 0 || action > 6)){
                 System.out.println("invalid action: " + action);
                 action = null;
             }
@@ -152,6 +230,28 @@ public class CLI {
                 break;
             case 4:
                 ConsoleHelper.printBlock(this.blockChain, ConsoleHelper.readString("Hash: "));
+                break;
+            case 5:
+                var result = blockChain.verifyBlockChain();
+                if (result.verificationResult() == BlockchainVerificationResultEnum.VALID)
+                    System.out.println("Blockchain is valid");
+                else{
+                    System.out.println("Error: " + result.verificationResult());
+                    if (result.invalidBlock() != null) {
+                        System.out.println("on block:");
+                        ConsoleHelper.printBlock(blockChain, result.invalidBlock().getHash());
+                    }
+                }
+                break;
+            case 6:
+                try {
+                    blockChain.serializeToFile(path);
+                    System.out.println("blockchain saved to: " + path);
+                }
+                catch (Exception e) {
+                    System.out.println(e.getMessage());
+                }
+                break;
         }
     }
     private void toggleMiner(){
