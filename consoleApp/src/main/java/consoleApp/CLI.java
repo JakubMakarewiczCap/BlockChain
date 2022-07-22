@@ -7,10 +7,12 @@ import blockChainClasses.utils.BlockchainVerificationResultEnum;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.beans.PropertyChangeEvent;
 import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Component("CLI")
@@ -19,6 +21,7 @@ public class CLI {
     private Miner miner;
     private Blockchain blockChain;
     private String path;
+    private final String minerId = "ConsoleUser";
 
     public void run() throws IOException {
         this.Init();
@@ -67,7 +70,9 @@ public class CLI {
             }
             this.blockChain = new Blockchain(difficulty);
         }
+        this.blockChain.addPropertyChangeListener(this::fireBlockChainUpdate);
     }
+
     private void onExit(){
         this.blockChain.serializeToFile(this.path);
     }
@@ -94,12 +99,10 @@ public class CLI {
     }
     //region Action Windows
     private void mine(){
-        Block block = blockChain.getNewBlock("ConsoleUser");
+        Block block = blockChain.getNewBlock(minerId);
         block.mine(blockChain.difficulty);
         boolean mined = blockChain.addBlock(block);
-        if (mined) {
-            System.out.println("Mined block");
-        } else {
+        if (!mined) {
             System.out.println("Could not mine block");
         }
     }
@@ -165,8 +168,9 @@ public class CLI {
                     ConsoleHelper.printTransactionHistory(
                             blockChain.getUserTransactionHistory(userId)
                                     .stream()
-                                    .dropWhile(t -> t.getTimestamp() < dateStart.getTime())
-                                    .takeWhile(t -> t.getTimestamp() < dateEnd.getTime())
+                                    .filter(t ->
+                                            t.getTimestamp() >= dateStart.getTime()
+                                            && t.getTimestamp() < dateEnd.getTime())
                                     .collect(Collectors.toCollection(ArrayList::new)));
                 }
                 catch (ParseException e){
@@ -261,7 +265,7 @@ public class CLI {
         }
         else {
             System.out.println("Starting Miner..");
-            this.miner.runMiner(this.blockChain, "ConsoleUser");
+            this.miner.runMiner(this.blockChain, this.minerId);
         }
     }
     private void showBlockChain(){
@@ -289,4 +293,14 @@ public class CLI {
     }
     //endregion
     //endregion
+    public void fireBlockChainUpdate(PropertyChangeEvent e) {
+        try {
+            if (Objects.equals(e.getPropertyName(), "blockChain")
+                    && Objects.equals(this.blockChain.getLastBlock().getTransactions().get(0).getToId(),
+                    this.minerId))
+                System.out.println("Mined a block!");
+        }
+        catch (IndexOutOfBoundsException ignored){}
+        blockChain.serializeToFile(path);
+    }
 }
