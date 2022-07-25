@@ -52,7 +52,8 @@ public class CLI {
                 System.out.println("Error: " + result.blockchainVerificationResult().verificationResult());
                 if (result.blockchainVerificationResult().invalidBlock() != null) {
                     System.out.println("on block:");
-                    ConsoleHelper.printBlock(result.blockchain(), result.blockchainVerificationResult().invalidBlock().getHash());
+                    ConsoleHelper.printBlock(result.blockchain(), result.blockchainVerificationResult().invalidBlock().getHash(),
+                            result.blockchainVerificationResult().verificationResult() == BlockchainVerificationResultEnum.INVALID_PREV_HASH);
                 }
             }
             this.blockChain = result.blockchain();
@@ -233,7 +234,7 @@ public class CLI {
                 ConsoleHelper.printBlockchain(this.blockChain, this.blockChain.getBlockChain().size()-1, 1);
                 break;
             case 4:
-                ConsoleHelper.printBlock(this.blockChain, ConsoleHelper.readString("Hash: "));
+                ConsoleHelper.printBlock(this.blockChain, ConsoleHelper.readString("Hash: "), true);
                 break;
             case 5:
                 var result = blockChain.verifyBlockChain();
@@ -243,7 +244,8 @@ public class CLI {
                     System.out.println("Error: " + result.verificationResult());
                     if (result.invalidBlock() != null) {
                         System.out.println("on block:");
-                        ConsoleHelper.printBlock(blockChain, result.invalidBlock().getHash());
+                        ConsoleHelper.printBlock(blockChain, result.invalidBlock().getHash(),
+                                result.verificationResult() == BlockchainVerificationResultEnum.INVALID_PREV_HASH);
                     }
                 }
                 break;

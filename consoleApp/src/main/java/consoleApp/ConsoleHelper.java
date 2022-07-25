@@ -104,13 +104,14 @@ public class ConsoleHelper {
         if (Objects.equals(block.getPrevHash(), "0"))
             stringBuilder.append(String.format("\n| prevHash: %-86s |\n", "0"));
         else
-            stringBuilder.append(String.format(
-                    "\n| %-96s |\n",
-                    String.format("prevHash: %4s...%4s",
-                            block.getPrevHash().substring(0,4),
-                            block.getPrevHash().substring(block.getPrevHash().length()-4)
-                    ))
-            );
+//            stringBuilder.append(String.format(
+//                    "\n| %-96s |\n",
+//                    String.format("prevHash: %4s...%4s",
+//                            block.getPrevHash().substring(0,4),
+//                            block.getPrevHash().substring(block.getPrevHash().length()-4)
+//                    ))
+//            );
+            stringBuilder.append(String.format("\n| prevHash: %-86s |\n", block.getPrevHash()));
         stringBuilder.append(String.format("| hash: %-90s |\n", block.getHash()));
         stringBuilder.append(String.format("| date: %-90s |\n",ConsoleHelper.dateFormat.format(new Date(block.getTimestamp()))));
         stringBuilder.append(String.format("| transactions: %-82s |\n", ""));
@@ -125,14 +126,36 @@ public class ConsoleHelper {
         return stringBuilder.toString();
     }
 
-    public static void printBlock(Blockchain blockChain, String hash) {
+    public static void printBlock(Blockchain blockChain, String hash, boolean printPrev) {
         Block block = blockChain.getBlockChain().stream()
                 .filter(b -> Objects.equals(b.getHash(), hash))
                 .findFirst()
                 .orElse(null);
         if (block == null)
             System.out.println("Block not found for hash: "+hash);
-        else
-            System.out.println(ConsoleHelper.buildBlockString(block));
+        else {
+            StringBuilder stringBuilder = new StringBuilder();
+            if (block.getDepth() > 0){
+                if (block.getDepth() > 1){
+                    stringBuilder.append(String.format("%50s\n", ".").repeat(2))
+                            .append(String.format("%50s\n", "V"));
+                }
+                if (printPrev) {
+                    Block blockPrev = blockChain.getBlockChain().stream()
+                            .filter(b -> Objects.equals(b.getDepth(), block.getDepth() - 1))
+                            .findFirst()
+                            .orElse(null);
+                    if (blockPrev != null) {
+                        stringBuilder.append(ConsoleHelper.buildBlockString(blockPrev));
+                        stringBuilder.append(String.format("\n %50s\n", "V"));
+                    }
+                }
+            }
+            stringBuilder.append(ConsoleHelper.buildBlockString(block));
+            if (block.getDepth() < blockChain.getLastBlock().getDepth())
+                stringBuilder.append(String.format("\n%50s", ".").repeat(2))
+                        .append(String.format("\n%50s", "V"));
+            System.out.println(stringBuilder);
+        }
     }
 }

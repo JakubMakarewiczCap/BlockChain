@@ -114,6 +114,10 @@ public class Blockchain {
         return true;
     }
 
+    private static final boolean checkCurrentHash = true;
+    private static final boolean checkTransactionHash = true;
+
+
     /**
      * This method verifies the blockChain.
      * If someone tinkers with the blockchain, this method will catch it
@@ -132,7 +136,8 @@ public class Blockchain {
         Block current;
         while (i.hasNext()) {
             current = i.next();
-            if (!Objects.equals(current.getHash(), current.generateHash()))
+            if (Blockchain.checkCurrentHash
+                    && !Objects.equals(current.getHash(), current.generateHash()))
                 return new BlockchainVerificationResult(BlockchainVerificationResultEnum.INVALID_HASH, current);
             if (!Objects.equals(prev.getHash(), current.getPrevHash()))
                 return new BlockchainVerificationResult(BlockchainVerificationResultEnum.INVALID_PREV_HASH, current);
@@ -285,7 +290,8 @@ public class Blockchain {
                 return false;
             if (Objects.equals(transaction.getFromId(), transaction.getToId()))
                 return false;
-            if (!Objects.equals(transaction.getHash(), transaction.generateHash()))
+            if (Blockchain.checkTransactionHash
+                    && !Objects.equals(transaction.getHash(), transaction.generateHash()))
                 return false;
             if (isNewTransaction) {
                 if (getUserBalance(transaction.getFromId(), true) < transaction.getAmount())
